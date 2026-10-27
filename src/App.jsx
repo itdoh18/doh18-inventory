@@ -11,7 +11,7 @@ function App() {
   // ควบคุมการแสดงผลปุ่มเลื่อนขึ้นด้านบน
   const [showScrollTop, setShowScrollTop] = useState(false);
 
-  // ฟอร์มสำหรับ เพิ่ม/แก้ไข (แปลงปี ค.ศ. เป็น พ.ศ. โดยบวก 543)
+  // ฟอร์มสำหรับ เพิ่ม/แก้ไข
   const [formData, setFormData] = useState({
     section: "",
     asset_number: "",
@@ -192,69 +192,73 @@ function App() {
   const currentYear = 2569; // ปีปัจจุบัน (พ.ศ.)
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6 md:p-10 relative">
+    <div className="min-h-screen bg-slate-50 p-4 sm:p-6 md:p-10 relative">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header และ Dashboard */}
-        <header className="bg-white shadow-xs border border-slate-100 rounded-2xl p-6 md:p-8 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="space-y-1 text-center md:text-left">
-            <h1 className="text-3xl font-bold text-slate-800">
-              ระบบจัดการครุภัณฑ์คอมพิวเตอร์
-            </h1>
-            <p className="text-slate-500 text-base">สำนักงานทางหลวงที่ 18</p>
-          </div>
-
-          <div className="flex items-center gap-5 w-full md:w-auto justify-between md:justify-end">
-            <div className="bg-blue-50 border border-blue-100 px-5 py-3 rounded-2xl flex items-baseline gap-3 shrink-0">
-              <span className="text-sm font-semibold text-blue-600 leading-none">
-                ครุภัณฑ์ทั้งหมด
-              </span>
-              <span className="text-2xl font-bold text-blue-700 leading-none">
-                {totalCount}
-              </span>
-              <span className="text-sm font-normal text-blue-500 leading-none">
-                รายการ
-              </span>
+        {/* Header และ Dashboard (ปรับให้รองรับมือถืออย่างสมบูรณ์ ไม่ทับกัน) */}
+        <header className="bg-white shadow-xs border border-slate-100 rounded-2xl p-5 sm:p-6 md:p-8 flex flex-col gap-5">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div className="space-y-1">
+              <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">
+                ระบบจัดการครุภัณฑ์คอมพิวเตอร์
+              </h1>
+              <p className="text-slate-500 text-sm sm:text-base">
+                สำนักงานทางหลวงที่ 18
+              </p>
             </div>
 
+            {/* ปุ่มเพิ่มครุภัณฑ์ (แสดงเต็มความกว้างบนมือถือ จัดเรียงสวยงาม) */}
             <button
               onClick={handleOpenAddModal}
-              className="bg-blue-600 text-white px-6 py-3 rounded-2xl hover:bg-blue-700 transition font-medium text-base flex items-center gap-2.5 shadow-sm shrink-0"
+              className="w-full md:w-auto bg-blue-600 text-white px-6 py-3 rounded-2xl hover:bg-blue-700 transition font-medium text-base flex items-center justify-center gap-2.5 shadow-sm shrink-0"
             >
               <span className="text-xl leading-none">+</span> เพิ่มครุภัณฑ์ใหม่
             </button>
           </div>
+
+          {/* แถบแสดงจำนวนครุภัณฑ์ทั้งหมด */}
+          <div className="flex items-center justify-between bg-blue-50 border border-blue-100 px-5 py-3 rounded-2xl">
+            <span className="text-sm font-semibold text-blue-600">
+              ครุภัณฑ์ทั้งหมด
+            </span>
+            <div className="text-xl sm:text-2xl font-bold text-blue-700 flex items-baseline gap-1.5">
+              <span>{totalCount}</span>
+              <span className="text-xs sm:text-sm font-normal text-blue-500">
+                รายการ
+              </span>
+            </div>
+          </div>
         </header>
 
         {/* ช่องค้นหาอัจฉริยะช่องเดียว */}
-        <div className="bg-white rounded-2xl shadow-xs border border-slate-100 p-5 flex items-center gap-4">
-          <div className="relative flex-1">
+        <div className="bg-white rounded-2xl shadow-xs border border-slate-100 p-4 sm:p-5 flex flex-col sm:flex-row items-center gap-4">
+          <div className="relative w-full flex-1">
             <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400 text-lg">
               🔍
             </span>
             <input
               type="text"
-              placeholder="ค้นหาได้ทุกข้อมูล เช่น ส่วนฝ่าย, หมายเลข, ประเภท, ผู้รับผิดชอบ, ปีที่ซื้อ..."
+              placeholder="ค้นหาได้ทุกข้อมูล เช่น ส่วนฝ่าย, หมายเลข, ประเภท..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full border border-slate-200 rounded-xl pl-12 pr-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50/50 text-slate-700 text-base font-normal"
+              className="w-full border border-slate-200 rounded-xl pl-12 pr-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50/50 text-slate-700 text-sm sm:text-base font-normal"
             />
           </div>
           {searchTerm && (
             <button
               onClick={() => setSearchTerm("")}
-              className="text-base text-rose-600 hover:bg-rose-50 px-5 py-3.5 rounded-xl transition font-medium shrink-0"
+              className="w-full sm:w-auto text-sm sm:text-base text-rose-600 hover:bg-rose-50 px-5 py-3.5 rounded-xl transition font-medium shrink-0 text-center"
             >
               ล้างคำค้นหา
             </button>
           )}
         </div>
 
-        {/* ตารางแสดงรายการครุภัณฑ์ */}
+        {/* ตารางแสดงรายการครุภัณฑ์ (รองรับการเลื่อนดูบนมือถือแบบสมูท) */}
         <div className="bg-white rounded-2xl shadow-xs border border-slate-100 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+          <div className="overflow-x-auto w-full">
+            <table className="w-full text-left border-collapse min-w-[800px]">
               <thead>
-                <tr className="bg-slate-800 text-white text-sm uppercase tracking-wider font-semibold">
+                <tr className="bg-slate-800 text-white text-xs sm:text-sm uppercase tracking-wider font-semibold">
                   <th className="p-4 whitespace-nowrap">ส่วนฝ่าย</th>
                   <th className="p-4 whitespace-nowrap">หมายเลขครุภัณฑ์</th>
                   <th className="p-4 whitespace-nowrap">ประเภท</th>
@@ -266,7 +270,7 @@ function App() {
                   <th className="p-4 text-center whitespace-nowrap">จัดการ</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
+              <tbody className="divide-y divide-slate-100 text-sm sm:text-base text-slate-700">
                 {loading ? (
                   <tr>
                     <td
@@ -300,7 +304,7 @@ function App() {
                           {item.asset_number}
                         </td>
                         <td className="p-4 whitespace-nowrap">
-                          <span className="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-lg text-xs font-medium">
+                          <span className="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-lg text-xs sm:text-sm font-medium">
                             {item.equipment_type}
                           </span>
                         </td>
@@ -316,7 +320,7 @@ function App() {
                         <td className="p-4 whitespace-nowrap">
                           {item.purchase_type ? (
                             <span
-                              className={`px-2.5 py-1 rounded-lg text-xs font-medium ${item.purchase_type === "จัดซื้อเพิ่ม" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}
+                              className={`px-2.5 py-1 rounded-lg text-xs sm:text-sm font-medium ${item.purchase_type === "ซื้อเพิ่ม" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}
                             >
                               {item.purchase_type}
                             </span>
@@ -357,7 +361,7 @@ function App() {
         </div>
       </div>
 
-      {/* ปุ่มเลื่อนขึ้นด้านบนสุด (แสดงเมื่อเลื่อนหน้าจอลงมา) */}
+      {/* ปุ่มเลื่อนขึ้นด้านบนสุด */}
       {showScrollTop && (
         <button
           onClick={scrollToTop}
@@ -371,9 +375,9 @@ function App() {
       {/* Popup Modal สำหรับ เพิ่ม / แก้ไขข้อมูล */}
       {showModal && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fadeIn">
-          <div className="bg-white rounded-3xl shadow-2xl p-6 md:p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-slate-100">
+          <div className="bg-white rounded-3xl shadow-2xl p-6 sm:p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-slate-100">
             <div className="flex justify-between items-center mb-6 pb-3 border-b border-slate-100">
-              <h2 className="text-2xl font-bold text-slate-800">
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-800">
                 {editingId ? "✏️ แก้ไขข้อมูลครุภัณฑ์" : "➕ เพิ่มครุภัณฑ์ใหม่"}
               </h2>
               <button
@@ -389,7 +393,7 @@ function App() {
               className="grid grid-cols-1 md:grid-cols-2 gap-5"
             >
               <div>
-                <label className="block text-base font-medium text-slate-700 mb-2">
+                <label className="block text-sm sm:text-base font-medium text-slate-700 mb-2">
                   ส่วนฝ่าย *
                 </label>
                 <input
@@ -404,7 +408,7 @@ function App() {
                 />
               </div>
               <div>
-                <label className="block text-base font-medium text-slate-700 mb-2">
+                <label className="block text-sm sm:text-base font-medium text-slate-700 mb-2">
                   หมายเลขครุภัณฑ์ *
                 </label>
                 <input
@@ -419,7 +423,7 @@ function App() {
                 />
               </div>
               <div>
-                <label className="block text-base font-medium text-slate-700 mb-2">
+                <label className="block text-sm sm:text-base font-medium text-slate-700 mb-2">
                   ประเภท
                 </label>
                 <select
@@ -437,7 +441,7 @@ function App() {
                 </select>
               </div>
               <div>
-                <label className="block text-base font-medium text-slate-700 mb-2">
+                <label className="block text-sm sm:text-base font-medium text-slate-700 mb-2">
                   ปีที่ซื้อ (พ.ศ.)
                 </label>
                 <input
@@ -453,7 +457,7 @@ function App() {
                 />
               </div>
               <div>
-                <label className="block text-base font-medium text-slate-700 mb-2">
+                <label className="block text-sm sm:text-base font-medium text-slate-700 mb-2">
                   ผู้รับผิดชอบ
                 </label>
                 <input
@@ -471,7 +475,7 @@ function App() {
               </div>
 
               <div>
-                <label className="block text-base font-medium text-slate-700 mb-2">
+                <label className="block text-sm sm:text-base font-medium text-slate-700 mb-2">
                   ประเภทการจัดซื้อ
                 </label>
                 <select
@@ -491,7 +495,7 @@ function App() {
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-base font-medium text-slate-700 mb-2">
+                <label className="block text-sm sm:text-base font-medium text-slate-700 mb-2">
                   หมายเหตุ
                 </label>
                 <input
@@ -505,17 +509,17 @@ function App() {
                 />
               </div>
 
-              <div className="md:col-span-2 flex gap-4 justify-end mt-6 pt-4 border-t border-slate-100">
+              <div className="md:col-span-2 flex flex-col sm:flex-row gap-3 justify-end mt-6 pt-4 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="bg-slate-100 text-slate-700 px-6 py-3 rounded-xl hover:bg-slate-200 transition font-medium text-base"
+                  className="w-full sm:w-auto bg-slate-100 text-slate-700 px-6 py-3 rounded-xl hover:bg-slate-200 transition font-medium text-base text-center"
                 >
                   ยกเลิก
                 </button>
                 <button
                   type="submit"
-                  className="bg-blue-600 text-white px-7 py-3 rounded-xl hover:bg-blue-700 transition font-medium text-base shadow-sm"
+                  className="w-full sm:w-auto bg-blue-600 text-white px-7 py-3 rounded-xl hover:bg-blue-700 transition font-medium text-base shadow-sm text-center"
                 >
                   {editingId ? "บันทึกการแก้ไข" : "บันทึกข้อมูลครุภัณฑ์"}
                 </button>
