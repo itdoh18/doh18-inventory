@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+/* กำหนดให้ใช้ฟอนต์ Kanit และขยายขนาดพื้นฐานให้ใหญ่ขึ้นเล็กน้อย */
+* {
+  font-family: "Kanit", sans-serif !important;
+}
+
+body {
+  font-size: 16px; /* ขยายขนาดฟอนต์หลักของหน้าเว็บ */
+}
