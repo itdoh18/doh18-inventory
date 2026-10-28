@@ -11,11 +11,11 @@ function App() {
   // ควบคุมการแสดงผลปุ่มเลื่อนขึ้นด้านบน
   const [showScrollTop, setShowScrollTop] = useState(false);
 
-  // ฟอร์มสำหรับ เพิ่ม/แก้ไข
+  // ฟอร์มสำหรับ เพิ่ม/แก้ไข (ปรับค่าเริ่มต้น equipment_type เป็นค่าว่าง '')
   const [formData, setFormData] = useState({
     section: "",
     asset_number: "",
-    equipment_type: "เครื่องคอมพิวเตอร์",
+    equipment_type: "",
     purchase_year: new Date().getFullYear() + 543,
     responsible_person: "",
     purchase_type: "",
@@ -36,9 +36,9 @@ function App() {
     "เครื่องสำรองไฟฟ้า",
     "เครื่องสแกนเนอร์",
     "จอภาพ",
-    "อุกปรณ์กระจายสัญญาณ",
+    "อุปกรณ์กระจายสัญญาณ",
   ];
-  const purchaseTypes = ["ซื้อเพิ่ม", "ทดแทน"];
+  const purchaseTypes = ["ซื้อเพิ่ม", "ทดแทน", "ศน."];
 
   // ดึงข้อมูลจาก Supabase และฟังการเลื่อนหน้าจอเมื่อเปิดเว็บ
   useEffect(() => {
@@ -87,11 +87,18 @@ function App() {
       return;
     }
 
+    // จัดการข้อมูล ถ้าไม่ได้เลือกประเภทอุปกรณ์หรือประเภทจัดซื้อ ให้บันทึกเป็น "-"
+    const dataToSave = {
+      ...formData,
+      equipment_type: formData.equipment_type ? formData.equipment_type : "-",
+      purchase_type: formData.purchase_type ? formData.purchase_type : "-",
+    };
+
     if (editingId) {
       // แก้ไขข้อมูล
       const { error } = await supabase
         .from("computer_assets")
-        .update(formData)
+        .update(dataToSave)
         .eq("id", editingId);
 
       if (error) {
@@ -106,7 +113,7 @@ function App() {
       // เพิ่มข้อมูลใหม่
       const { error } = await supabase
         .from("computer_assets")
-        .insert([formData]);
+        .insert([dataToSave]);
 
       if (error) {
         alert("เกิดข้อผิดพลาดในการเพิ่ม: " + error.message);
@@ -123,7 +130,7 @@ function App() {
     setFormData({
       section: "",
       asset_number: "",
-      equipment_type: "เครื่องคอมพิวเตอร์",
+      equipment_type: "",
       purchase_year: new Date().getFullYear() + 543,
       responsible_person: "",
       purchase_type: "",
@@ -144,10 +151,16 @@ function App() {
     setFormData({
       section: item.section,
       asset_number: item.asset_number,
-      equipment_type: item.equipment_type,
+      equipment_type:
+        item.equipment_type && item.equipment_type !== "-"
+          ? item.equipment_type
+          : "",
       purchase_year: item.purchase_year,
       responsible_person: item.responsible_person || "",
-      purchase_type: item.purchase_type || "",
+      purchase_type:
+        item.purchase_type && item.purchase_type !== "-"
+          ? item.purchase_type
+          : "",
       notes: item.notes || "",
     });
     setShowModal(true);
@@ -194,7 +207,7 @@ function App() {
   return (
     <div className="min-h-screen bg-slate-50 p-4 sm:p-6 md:p-10 relative">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header และ Dashboard (ปรับให้รองรับมือถืออย่างสมบูรณ์ ไม่ทับกัน) */}
+        {/* Header และ Dashboard */}
         <header className="bg-white shadow-xs border border-slate-100 rounded-2xl p-5 sm:p-6 md:p-8 flex flex-col gap-5">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div className="space-y-1">
@@ -206,7 +219,6 @@ function App() {
               </p>
             </div>
 
-            {/* ปุ่มเพิ่มครุภัณฑ์ (แสดงเต็มความกว้างบนมือถือ จัดเรียงสวยงาม) */}
             <button
               onClick={handleOpenAddModal}
               className="w-full md:w-auto bg-blue-600 text-white px-6 py-3 rounded-2xl hover:bg-blue-700 transition font-medium text-base flex items-center justify-center gap-2.5 shadow-sm shrink-0"
@@ -215,7 +227,6 @@ function App() {
             </button>
           </div>
 
-          {/* แถบแสดงจำนวนครุภัณฑ์ทั้งหมด */}
           <div className="flex items-center justify-between bg-blue-50 border border-blue-100 px-5 py-3 rounded-2xl">
             <span className="text-sm font-semibold text-blue-600">
               ครุภัณฑ์ทั้งหมด
@@ -253,7 +264,7 @@ function App() {
           )}
         </div>
 
-        {/* ตารางแสดงรายการครุภัณฑ์ (รองรับการเลื่อนดูบนมือถือแบบสมูท) */}
+        {/* ตารางแสดงรายการครุภัณฑ์ */}
         <div className="bg-white rounded-2xl shadow-xs border border-slate-100 overflow-hidden">
           <div className="overflow-x-auto w-full">
             <table className="w-full text-left border-collapse min-w-[800px]">
@@ -304,9 +315,14 @@ function App() {
                           {item.asset_number}
                         </td>
                         <td className="p-4 whitespace-nowrap">
-                          <span className="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-lg text-xs sm:text-sm font-medium">
-                            {item.equipment_type}
-                          </span>
+                          {item.equipment_type &&
+                          item.equipment_type !== "-" ? (
+                            <span className="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-lg text-xs sm:text-sm font-medium">
+                              {item.equipment_type}
+                            </span>
+                          ) : (
+                            <span className="text-slate-400">-</span>
+                          )}
                         </td>
                         <td className="p-4 text-slate-600 whitespace-nowrap">
                           {item.purchase_year}
@@ -318,9 +334,9 @@ function App() {
                           {item.responsible_person || "-"}
                         </td>
                         <td className="p-4 whitespace-nowrap">
-                          {item.purchase_type ? (
+                          {item.purchase_type && item.purchase_type !== "-" ? (
                             <span
-                              className={`px-2.5 py-1 rounded-lg text-xs sm:text-sm font-medium ${item.purchase_type === "ซื้อเพิ่ม" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}
+                              className={`px-2.5 py-1 rounded-lg text-xs sm:text-sm font-medium ${item.purchase_type === "ซื้อเพิ่ม" ? "bg-emerald-50 text-emerald-700" : item.purchase_type === "ทดแทน" ? "bg-amber-50 text-amber-700" : "bg-purple-50 text-purple-700"}`}
                             >
                               {item.purchase_type}
                             </span>
@@ -433,6 +449,7 @@ function App() {
                   }
                   className="w-full border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-700 text-base"
                 >
+                  <option value="">-- เลือกประเภทอุปกรณ์ --</option>
                   {equipmentTypes.map((type) => (
                     <option key={type} value={type}>
                       {type}
