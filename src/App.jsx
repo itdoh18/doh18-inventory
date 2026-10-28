@@ -11,7 +11,7 @@ function App() {
   // ควบคุมการแสดงผลปุ่มเลื่อนขึ้นด้านบน
   const [showScrollTop, setShowScrollTop] = useState(false);
 
-  // ฟอร์มสำหรับ เพิ่ม/แก้ไข (ปรับค่าเริ่มต้น equipment_type เป็นค่าว่าง '')
+  // ฟอร์มสำหรับ เพิ่ม/แก้ไข
   const [formData, setFormData] = useState({
     section: "",
     asset_number: "",
@@ -36,9 +36,11 @@ function App() {
     "เครื่องสำรองไฟฟ้า",
     "เครื่องสแกนเนอร์",
     "จอภาพ",
-    "อุปกรณ์กระจายสัญญาณ",
+    "อุกปรณ์กระจายสัญญาณ",
   ];
-  const purchaseTypes = ["ซื้อเพิ่ม", "ทดแทน", "ศน."];
+
+  // เพิ่ม "สป." เข้าไปในรายการประเภทการจัดซื้อเรียบร้อยแล้ว
+  const purchaseTypes = ["ซื้อเพิ่ม", "ทดแทน", "ศน.", "สป."];
 
   // ดึงข้อมูลจาก Supabase และฟังการเลื่อนหน้าจอเมื่อเปิดเว็บ
   useEffect(() => {
@@ -336,7 +338,15 @@ function App() {
                         <td className="p-4 whitespace-nowrap">
                           {item.purchase_type && item.purchase_type !== "-" ? (
                             <span
-                              className={`px-2.5 py-1 rounded-lg text-xs sm:text-sm font-medium ${item.purchase_type === "ซื้อเพิ่ม" ? "bg-emerald-50 text-emerald-700" : item.purchase_type === "ทดแทน" ? "bg-amber-50 text-amber-700" : "bg-purple-50 text-purple-700"}`}
+                              className={`px-2.5 py-1 rounded-lg text-xs sm:text-sm font-medium ${
+                                item.purchase_type === "ซื้อเพิ่ม"
+                                  ? "bg-emerald-50 text-emerald-700"
+                                  : item.purchase_type === "ทดแทน"
+                                    ? "bg-amber-50 text-amber-700"
+                                    : item.purchase_type === "ศน."
+                                      ? "bg-purple-50 text-purple-700"
+                                      : "bg-sky-50 text-sky-700"
+                              }`}
                             >
                               {item.purchase_type}
                             </span>
