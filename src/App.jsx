@@ -5,11 +5,32 @@ function App() {
   const [assets, setAssets] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // ควบคุมการแสดงผลป็อปอัพฟอร์ม (Modal)
+  // ควบคุมการแสดงผลป็อปอัพฟอร์ม (Modal) เพิ่ม/แก้ไข
   const [showModal, setShowModal] = useState(false);
+
+  // ควบคุมการแสดงผลป็อปอัพค้นหาแบบละเอียด
+  const [showAdvanceModal, setShowAdvanceModal] = useState(false);
 
   // ควบคุมการแสดงผลปุ่มเลื่อนขึ้นด้านบน
   const [showScrollTop, setShowScrollTop] = useState(false);
+
+  // รายการส่วนฝ่ายทั้งหมด
+  const sectionList = [
+    "สำรวจและออกแบบ",
+    "ก่อสร้าง",
+    "ตรวจสอบและวิเคราะห์ทางวิศวกรรม",
+    "กฏหมายและกรรมสิทธ์",
+    "ไฟฟ้า",
+    "เครื่องกล",
+    "อำนวยความปลอดภัย",
+    "สารสนเทศ",
+    "พัสดุและสัญญา",
+    "แผนงาน",
+    "การเงินและบัญชี",
+    "สารบัญ",
+    "บริหาร",
+    "ผู้บริหาร",
+  ];
 
   // ฟอร์มสำหรับ เพิ่ม/แก้ไข
   const [formData, setFormData] = useState({
@@ -24,8 +45,24 @@ function App() {
 
   const [editingId, setEditingId] = useState(null);
 
-  // ช่องค้นหาเดียวแบบครอบคลุมทุกอย่าง
+  // ช่องค้นหาหลักแบบเดิม
   const [searchTerm, setSearchTerm] = useState("");
+
+  // ค่าสำหรับฟอร์มค้นหาแบบละเอียด (Advanced Search)
+  const [advanceSearch, setAdvanceSearch] = useState({
+    section: "",
+    equipment_type: "",
+    purchase_year: "",
+    purchase_type: "",
+  });
+
+  // สถานะเก็บเงื่อนไขค้นหาแบบละเอียดที่กดใช้งานจริง
+  const [activeAdvanceSearch, setActiveAdvanceSearch] = useState({
+    section: "",
+    equipment_type: "",
+    purchase_year: "",
+    purchase_type: "",
+  });
 
   const equipmentTypes = [
     "เครื่องคอมพิวเตอร์",
@@ -38,8 +75,6 @@ function App() {
     "จอภาพ",
     "อุกปรณ์กระจายสัญญาณ",
   ];
-
-  // เพิ่ม "สป." เข้าไปในรายการประเภทการจัดซื้อเรียบร้อยแล้ว
   const purchaseTypes = ["ซื้อเพิ่ม", "ทดแทน", "ศน.", "สป."];
 
   // ดึงข้อมูลจาก Supabase และฟังการเลื่อนหน้าจอเมื่อเปิดเว็บ
@@ -89,15 +124,14 @@ function App() {
       return;
     }
 
-    // จัดการข้อมูล ถ้าไม่ได้เลือกประเภทอุปกรณ์หรือประเภทจัดซื้อ ให้บันทึกเป็น "-"
     const dataToSave = {
       ...formData,
+      section: formData.section ? formData.section : "-",
       equipment_type: formData.equipment_type ? formData.equipment_type : "-",
       purchase_type: formData.purchase_type ? formData.purchase_type : "-",
     };
 
     if (editingId) {
-      // แก้ไขข้อมูล
       const { error } = await supabase
         .from("computer_assets")
         .update(dataToSave)
@@ -112,7 +146,6 @@ function App() {
         fetchAssets();
       }
     } else {
-      // เพิ่มข้อมูลใหม่
       const { error } = await supabase
         .from("computer_assets")
         .insert([dataToSave]);
@@ -141,17 +174,15 @@ function App() {
     setEditingId(null);
   }
 
-  // เปิดป็อปอัพเพื่อเพิ่มข้อมูลใหม่
   function handleOpenAddModal() {
     resetForm();
     setShowModal(true);
   }
 
-  // นำข้อมูลมาใส่ฟอร์มและเปิดป็อปอัพเพื่อแก้ไข
   function handleEdit(item) {
     setEditingId(item.id);
     setFormData({
-      section: item.section,
+      section: item.section && item.section !== "-" ? item.section : "",
       asset_number: item.asset_number,
       equipment_type:
         item.equipment_type && item.equipment_type !== "-"
@@ -168,7 +199,6 @@ function App() {
     setShowModal(true);
   }
 
-  // ลบข้อมูล
   async function handleDelete(id) {
     if (window.confirm("คุณต้องการลบรายการนี้ใช่หรือไม่?")) {
       const { error } = await supabase
@@ -184,12 +214,11 @@ function App() {
     }
   }
 
-  // ค้นหาแบบครอบคลุมทุกลักษณะข้อมูลในช่องเดียว
+  // ระบบกรองข้อมูล
   const filteredAssets = assets.filter((item) => {
     const term = searchTerm.toLowerCase().trim();
-    if (!term) return true;
-
-    return (
+    const matchMainSearch =
+      !term ||
       (item.section && item.section.toLowerCase().includes(term)) ||
       (item.asset_number && item.asset_number.toLowerCase().includes(term)) ||
       (item.equipment_type &&
@@ -198,13 +227,40 @@ function App() {
         item.responsible_person.toLowerCase().includes(term)) ||
       (item.purchase_type && item.purchase_type.toLowerCase().includes(term)) ||
       (item.notes && item.notes.toLowerCase().includes(term)) ||
-      (item.purchase_year && item.purchase_year.toString().includes(term))
+      (item.purchase_year && item.purchase_year.toString().includes(term));
+
+    const matchSection =
+      !activeAdvanceSearch.section ||
+      item.section === activeAdvanceSearch.section;
+    const matchEquipment =
+      !activeAdvanceSearch.equipment_type ||
+      item.equipment_type === activeAdvanceSearch.equipment_type;
+    const matchYear =
+      !activeAdvanceSearch.purchase_year ||
+      (item.purchase_year &&
+        item.purchase_year.toString() ===
+          activeAdvanceSearch.purchase_year.toString().trim());
+    const matchPurchaseType =
+      !activeAdvanceSearch.purchase_type ||
+      item.purchase_type === activeAdvanceSearch.purchase_type;
+
+    return (
+      matchMainSearch &&
+      matchSection &&
+      matchEquipment &&
+      matchYear &&
+      matchPurchaseType
     );
   });
 
-  // คำนวณจำนวนครุภัณฑ์ทั้งหมด
   const totalCount = assets.length;
-  const currentYear = 2569; // ปีปัจจุบัน (พ.ศ.)
+  const currentYear = 2569;
+
+  const isAdvanceActive =
+    activeAdvanceSearch.section ||
+    activeAdvanceSearch.equipment_type ||
+    activeAdvanceSearch.purchase_year ||
+    activeAdvanceSearch.purchase_type;
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 sm:p-6 md:p-10 relative">
@@ -242,8 +298,8 @@ function App() {
           </div>
         </header>
 
-        {/* ช่องค้นหาอัจฉริยะช่องเดียว */}
-        <div className="bg-white rounded-2xl shadow-xs border border-slate-100 p-4 sm:p-5 flex flex-col sm:flex-row items-center gap-4">
+        {/* ช่องค้นหาหลัก และ ปุ่มค้นหาแบบละเอียด */}
+        <div className="bg-white rounded-2xl shadow-xs border border-slate-100 p-4 sm:p-5 flex flex-col sm:flex-row items-center gap-3">
           <div className="relative w-full flex-1">
             <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400 text-lg">
               🔍
@@ -256,12 +312,38 @@ function App() {
               className="w-full border border-slate-200 rounded-xl pl-12 pr-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50/50 text-slate-700 text-sm sm:text-base font-normal"
             />
           </div>
-          {searchTerm && (
+
+          <button
+            onClick={() => setShowAdvanceModal(true)}
+            className={`w-full sm:w-auto px-5 py-3.5 rounded-xl transition font-medium text-sm sm:text-base flex items-center justify-center gap-2 shrink-0 border ${
+              isAdvanceActive
+                ? "bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700"
+                : "bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200"
+            }`}
+          >
+            ⚙️ ค้นหาแบบละเอียด {isAdvanceActive && "(ใช้งานอยู่)"}
+          </button>
+
+          {(searchTerm || isAdvanceActive) && (
             <button
-              onClick={() => setSearchTerm("")}
+              onClick={() => {
+                setSearchTerm("");
+                setAdvanceSearch({
+                  section: "",
+                  equipment_type: "",
+                  purchase_year: "",
+                  purchase_type: "",
+                });
+                setActiveAdvanceSearch({
+                  section: "",
+                  equipment_type: "",
+                  purchase_year: "",
+                  purchase_type: "",
+                });
+              }}
               className="w-full sm:w-auto text-sm sm:text-base text-rose-600 hover:bg-rose-50 px-5 py-3.5 rounded-xl transition font-medium shrink-0 text-center"
             >
-              ล้างคำค้นหา
+              ล้างคำค้นหาทั้งหมด
             </button>
           )}
         </div>
@@ -359,7 +441,6 @@ function App() {
                         </td>
                         <td className="p-4 text-center whitespace-nowrap">
                           <div className="flex items-center justify-center gap-2">
-                            {/* ปุ่มแก้ไข (ไอคอนดินสอ) */}
                             <button
                               onClick={() => handleEdit(item)}
                               title="แก้ไขข้อมูล"
@@ -367,7 +448,6 @@ function App() {
                             >
                               ✏️
                             </button>
-                            {/* ปุ่มลบ (ไอคอนถังขยะ) */}
                             <button
                               onClick={() => handleDelete(item.id)}
                               title="ลบข้อมูล"
@@ -398,6 +478,148 @@ function App() {
         </button>
       )}
 
+      {/* Modal: ค้นหาแบบละเอียด */}
+      {showAdvanceModal && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fadeIn">
+          <div className="bg-white rounded-3xl shadow-2xl p-6 sm:p-8 w-full max-w-xl max-h-[90vh] overflow-y-auto border border-slate-100">
+            <div className="flex justify-between items-center mb-6 pb-3 border-b border-slate-100">
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-800">
+                ⚙️ ค้นหาข้อมูลแบบละเอียด
+              </h2>
+              <button
+                onClick={() => setShowAdvanceModal(false)}
+                className="text-slate-400 hover:text-slate-600 text-2xl font-bold p-1.5 rounded-xl hover:bg-slate-100 transition"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm sm:text-base font-medium text-slate-700 mb-2">
+                  ส่วนฝ่าย
+                </label>
+                <select
+                  value={advanceSearch.section}
+                  onChange={(e) =>
+                    setAdvanceSearch({
+                      ...advanceSearch,
+                      section: e.target.value,
+                    })
+                  }
+                  className="w-full border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-700 text-base"
+                >
+                  <option value="">-- เลือกส่วนฝ่ายที่ต้องการ --</option>
+                  {sectionList.map((sec) => (
+                    <option key={sec} value={sec}>
+                      {sec}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm sm:text-base font-medium text-slate-700 mb-2">
+                  ประเภทอุปกรณ์
+                </label>
+                <select
+                  value={advanceSearch.equipment_type}
+                  onChange={(e) =>
+                    setAdvanceSearch({
+                      ...advanceSearch,
+                      equipment_type: e.target.value,
+                    })
+                  }
+                  className="w-full border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-700 text-base"
+                >
+                  <option value="">-- เลือกประเภทอุปกรณ์ --</option>
+                  {equipmentTypes.map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm sm:text-base font-medium text-slate-700 mb-2">
+                  ปีที่ซื้อ (พ.ศ.)
+                </label>
+                <input
+                  type="number"
+                  placeholder="เช่น 2569"
+                  value={advanceSearch.purchase_year}
+                  onChange={(e) =>
+                    setAdvanceSearch({
+                      ...advanceSearch,
+                      purchase_year: e.target.value,
+                    })
+                  }
+                  className="w-full border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-700 text-base"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm sm:text-base font-medium text-slate-700 mb-2">
+                  ประเภทการจัดซื้อ
+                </label>
+                <select
+                  value={advanceSearch.purchase_type}
+                  onChange={(e) =>
+                    setAdvanceSearch({
+                      ...advanceSearch,
+                      purchase_type: e.target.value,
+                    })
+                  }
+                  className="w-full border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-700 text-base"
+                >
+                  <option value="">-- เลือกประเภทการจัดซื้อ --</option>
+                  {purchaseTypes.map((pType) => (
+                    <option key={pType} value={pType}>
+                      {pType}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3 justify-end mt-6 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAdvanceSearch({
+                      section: "",
+                      equipment_type: "",
+                      purchase_year: "",
+                      purchase_type: "",
+                    });
+                    setActiveAdvanceSearch({
+                      section: "",
+                      equipment_type: "",
+                      purchase_year: "",
+                      purchase_type: "",
+                    });
+                    setShowAdvanceModal(false);
+                  }}
+                  className="w-full sm:w-auto bg-slate-100 text-slate-700 px-6 py-3 rounded-xl hover:bg-slate-200 transition font-medium text-base text-center"
+                >
+                  ล้างค่าค้นหา
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveAdvanceSearch(advanceSearch);
+                    setShowAdvanceModal(false);
+                  }}
+                  className="w-full sm:w-auto bg-indigo-600 text-white px-7 py-3 rounded-xl hover:bg-indigo-700 transition font-medium text-base shadow-sm text-center"
+                >
+                  ค้นหาข้อมูล
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Popup Modal สำหรับ เพิ่ม / แก้ไขข้อมูล */}
       {showModal && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fadeIn">
@@ -422,16 +644,21 @@ function App() {
                 <label className="block text-sm sm:text-base font-medium text-slate-700 mb-2">
                   ส่วนฝ่าย *
                 </label>
-                <input
-                  type="text"
+                <select
                   required
-                  placeholder="เช่น สารบัญ, บัญชี, สารสนเทศ"
                   value={formData.section}
                   onChange={(e) =>
                     setFormData({ ...formData, section: e.target.value })
                   }
-                  className="w-full border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-700 text-base"
-                />
+                  className="w-full border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-700 text-base"
+                >
+                  <option value="">-- เลือกส่วนฝ่ายที่ต้องการ --</option>
+                  {sectionList.map((sec) => (
+                    <option key={sec} value={sec}>
+                      {sec}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="block text-sm sm:text-base font-medium text-slate-700 mb-2">
