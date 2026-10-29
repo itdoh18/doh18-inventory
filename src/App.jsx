@@ -75,7 +75,9 @@ function App() {
     "จอภาพ",
     "อุกปรณ์กระจายสัญญาณ",
   ];
-  const purchaseTypes = ["ซื้อเพิ่ม", "ทดแทน", "ศน.", "สป."];
+
+  // เพิ่ม "สว." เข้าไปในรายการประเภทการจัดซื้อเรียบร้อยแล้ว
+  const purchaseTypes = ["ซื้อเพิ่ม", "ทดแทน", "ศน.", "สป.", "สว."];
 
   // ดึงข้อมูลจาก Supabase และฟังการเลื่อนหน้าจอเมื่อเปิดเว็บ
   useEffect(() => {
@@ -427,7 +429,9 @@ function App() {
                                     ? "bg-amber-50 text-amber-700"
                                     : item.purchase_type === "ศน."
                                       ? "bg-purple-50 text-purple-700"
-                                      : "bg-sky-50 text-sky-700"
+                                      : item.purchase_type === "สป."
+                                        ? "bg-sky-50 text-sky-700"
+                                        : "bg-rose-50 text-rose-700"
                               }`}
                             >
                               {item.purchase_type}
